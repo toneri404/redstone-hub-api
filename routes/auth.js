@@ -69,9 +69,9 @@ router.post("/login", async (req, res) => {
   res
     .cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: false, // set true when you deploy behind HTTPS
-      maxAge,
+      sameSite: "none",
+      secure: true,
+      maxAge: 7 * 24 * 60 * 1000,
     })
     .json({
       message: "Logged in",
