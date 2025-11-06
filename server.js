@@ -11,11 +11,15 @@ dotenv.config();
 
 const app = express();
 
+
+app.set("trust proxy", 1);
+
+
 app.use(
   cors({
     origin: [
-      "https://redstone-hof-wbc.vercel.app", 
-      "http://localhost:5173",             
+      "https://redstone-hof-wbc.vercel.app",
+      "http://localhost:5173",
     ],
     credentials: true,
   })
