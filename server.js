@@ -11,9 +11,7 @@ dotenv.config();
 
 const app = express();
 
-
 app.set("trust proxy", 1);
-
 
 app.use(
   cors({
@@ -28,7 +26,18 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// test route
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    status: "healthy",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+
+
 app.get("/test-db", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT DATABASE() AS db");
