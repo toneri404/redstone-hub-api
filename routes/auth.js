@@ -5,7 +5,6 @@ import { pool } from "../db.js";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
-
 const isProd = process.env.NODE_ENV === "production";
 
 export function requireAuth(req, res, next) {
@@ -56,8 +55,8 @@ router.post("/login", async (req, res) => {
 
     const expiresIn = rememberMe ? "30d" : "12h";
     const maxAge = rememberMe
-      ? 30 * 24 * 60 * 60 * 1000   // 30 days
-      : 12 * 60 * 60 * 1000;      // 12 hours
+      ? 30 * 24 * 60 * 60 * 1000
+      : 12 * 60 * 60 * 1000;
 
     const token = jwt.sign(
       { id: admin.id, username: admin.username, role: admin.role },
@@ -65,19 +64,21 @@ router.post("/login", async (req, res) => {
       { expiresIn }
     );
 
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        sameSite: isProd ? "none" : "lax",
-        secure: isProd,
-        maxAge,
-        path: "/",
-      })
-      .json({
-        message: "Logged in",
-        admin: { id: admin.id, username: admin.username, role: admin.role },
-        rememberMe: !!rememberMe,
-      });
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      maxAge,
+      path: "/",
+    });
+
+    return res.json({
+      message: "Logged in",
+      token,
+      admin: { id: admin.id, username: admin.username, role: admin.role },
+      rememberMe: !!rememberMe,
+    });
+
   } catch (err) {
     console.error("Login error:", err);
     return res
@@ -87,7 +88,6 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-
   res.cookie("token", "", {
     httpOnly: true,
     sameSite: isProd ? "none" : "lax",
@@ -99,13 +99,11 @@ router.post("/logout", (req, res) => {
   return res.json({ message: "Logged out" });
 });
 
-
 router.get("/me", requireAuth, (req, res) => {
   res.json({ admin: req.admin });
 });
 
 export default router;
-
 
 export function requireSuperadmin(req, res, next) {
   if (!req.admin) {
