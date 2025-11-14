@@ -1,4 +1,3 @@
-// routes/auth.js
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -7,7 +6,8 @@ import { pool } from "../db.js";
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 
-/* ---------- middleware to protect routes ---------- */
+const isProd = process.env.NODE_ENV === "production";
+
 export function requireAuth(req, res, next) {
   const bearer = req.headers.authorization || "";
   const tokenFromHeader = bearer.startsWith("Bearer ")
@@ -29,7 +29,6 @@ export function requireAuth(req, res, next) {
   }
 }
 
-/* ---------- POST /api/auth/login ---------- */
 router.post("/login", async (req, res) => {
   const { username, password, rememberMe } = req.body;
 
@@ -54,11 +53,10 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  // 👇 different lifetimes based on rememberMe
   const expiresIn = rememberMe ? "30d" : "12h";
   const maxAge = rememberMe
-    ? 30 * 24 * 60 * 60 * 1000 // 30 days
-    : 12 * 60 * 60 * 1000;    // 12 hours
+    ? 30 * 24 * 60 * 60 * 1000   // 30 days
+    : 12 * 60 * 60 * 1000;      // 12 hours
 
   const token = jwt.sign(
     { id: admin.id, username: admin.username, role: admin.role },
@@ -69,9 +67,10 @@ router.post("/login", async (req, res) => {
   res
     .cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 7 * 24 * 60 * 1000,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      maxAge,
+      path: "/",
     })
     .json({
       message: "Logged in",
@@ -80,20 +79,23 @@ router.post("/login", async (req, res) => {
     });
 });
 
-/* ---------- POST /api/auth/logout ---------- */
 router.post("/logout", (req, res) => {
-  res.clearCookie("token").json({ message: "Logged out" });
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
+    path: "/",
+  });
+
+  return res.json({ message: "Logged out" });
 });
 
-/* ---------- GET /api/auth/me ---------- */
 router.get("/me", requireAuth, (req, res) => {
   res.json({ admin: req.admin });
 });
 
 export default router;
 
-
-// 👇 add this
 export function requireSuperadmin(req, res, next) {
   if (!req.admin) {
     return res.status(401).json({ message: "Not authenticated" });
