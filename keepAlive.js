@@ -7,4 +7,5 @@ setInterval(async () => {
   } catch (err) {
     console.log("Keep-alive error:", err.message);
   }
-}, 300000);
+}, 2 * 60 * 1000);
+
