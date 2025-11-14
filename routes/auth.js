@@ -79,15 +79,61 @@ router.post("/login", async (req, res) => {
     });
 });
 
-router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    sameSite: isProd ? "none" : "lax",
-    secure: isProd,
-    path: "/",
-  });
+router.post("/login", async (req, res) => {
+  const { username, password, rememberMe } = req.body;
 
-  return res.json({ message: "Logged out" });
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username and password are required" });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM admins WHERE username = ?",
+      [username]
+    );
+    const admin = rows[0];
+
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const ok = await bcrypt.compare(password, admin.password_hash);
+    if (!ok) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const expiresIn = rememberMe ? "30d" : "12h";
+    const maxAge = rememberMe
+      ? 30 * 24 * 60 * 60 * 1000   
+      : 12 * 60 * 60 * 1000;     
+
+    const token = jwt.sign(
+      { id: admin.id, username: admin.username, role: admin.role },
+      JWT_SECRET,
+      { expiresIn }
+    );
+
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        sameSite: isProd ? "none" : "lax",
+        secure: isProd,
+        maxAge,
+        path: "/",
+      })
+      .json({
+        message: "Logged in",
+        admin: { id: admin.id, username: admin.username, role: admin.role },
+        rememberMe: !!rememberMe,
+      });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error during login, please try again" });
+  }
 });
 
 router.get("/me", requireAuth, (req, res) => {
