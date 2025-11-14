@@ -58,6 +58,16 @@ app.use("/api/hof", hofRoutes);
 app.use("/api/wbc", wbcRoutes);
 
 const port = process.env.PORT || 4000;
+// global error handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({ message: "Server error" });
+});
+
+
 app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
 });
