@@ -2,22 +2,24 @@
 import { pool } from "./db.js";
 import bcrypt from "bcrypt";
 
-const username = "admin";           // 👈 your login name
-const password = "redstone123";     // 👈 your password (pick anything)
+const username = "admin";
+const password = "redstone123";
 
 async function main() {
-  const hash = await bcrypt.hash(password, 10);
+  try {
+    const hash = await bcrypt.hash(password, 10);
 
-  await pool.query(
-    "INSERT INTO admins (username, password_hash, role) VALUES (?, ?, 'superadmin')",
-    [username, hash]
-  );
+    await pool.query(
+      "INSERT INTO admins (username, password_hash) VALUES (?, ?)",
+      [username, hash]
+    );
 
-  console.log("✅ Admin created:", username);
-  process.exit(0);
+    console.log("Admin created:", username);
+  } catch (err) {
+    console.error("Error:", err.message);
+  } finally {
+    process.exit(0);
+  }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main();
