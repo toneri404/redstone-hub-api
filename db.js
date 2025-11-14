@@ -11,4 +11,5 @@ export const pool = mysql.createPool({
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
+  connectTimeout: 20000,
 });

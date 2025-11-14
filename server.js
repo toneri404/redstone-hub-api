@@ -6,6 +6,8 @@ import { pool } from "./db.js";
 import authRoutes from "./routes/auth.js";
 import hofRoutes from "./routes/hof.js";
 import wbcRoutes from "./routes/wbc.js";
+import "./keepAlive.js";
+
 
 dotenv.config();
 
@@ -18,6 +20,8 @@ app.use(
     origin: [
       "https://redstone-hof-wbc.vercel.app",
       "http://localhost:5173",
+      "https://minershub.online",
+      "https://www.minershub.online",
     ],
     credentials: true,
   })
